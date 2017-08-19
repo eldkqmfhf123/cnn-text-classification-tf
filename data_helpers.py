@@ -2,6 +2,7 @@ import numpy as np
 import re
 import itertools
 from collections import Counter
+import pandas as pd
 
 
 def clean_str(string):
@@ -25,24 +26,45 @@ def clean_str(string):
     return string.strip().lower()
 
 
-def load_data_and_labels(positive_data_file, negative_data_file):
+def load_data_and_labels(csv_file):
     """
     Loads MR polarity data from files, splits the data into words and generates labels.
     Returns split sentences and labels.
     """
-    # Load data from files
-    positive_examples = list(open(positive_data_file, "r").readlines())
-    positive_examples = [s.strip() for s in positive_examples]
-    negative_examples = list(open(negative_data_file, "r").readlines())
-    negative_examples = [s.strip() for s in negative_examples]
-    # Split by words
-    x_text = positive_examples + negative_examples
-    x_text = [clean_str(sent) for sent in x_text]
-    # Generate labels
-    positive_labels = [[0, 1] for _ in positive_examples]
-    negative_labels = [[1, 0] for _ in negative_examples]
-    y = np.concatenate([positive_labels, negative_labels], 0)
-    return [x_text, y]
+    # # Load data from files
+    # positive_examples = list(open(positive_data_file, "r").readlines())
+    # positive_examples = [s.strip() for s in positive_examples]
+    # negative_examples = list(open(negative_data_file, "r").readlines())
+    # negative_examples = [s.strip() for s in negative_examples]
+    # # Split by words
+    # x_text = positive_examples + negative_examples
+    # x_text = [clean_str(sent) for sent in x_text]
+    # # Generate labels
+    # positive_labels = [[0, 1] for _ in positive_examples]
+    # negative_labels = [[1, 0] for _ in negative_examples]
+    # y = np.concatenate([positive_labels, negative_labels], 0)
+    # return [x_text, y]
+
+    dataset = pd.read_csv(csv_file, header=0)
+
+    x_test = dataset['body'].values.tolist()
+    y_tmp = dataset['categories'].values.tolist()
+    x_test = [clean_str(sent) for sent in x_test]
+    y = list()
+
+    for category in y_tmp:
+        if category == 'politics':
+            y.append([1,0,0,0,0])
+        elif category == 'business':
+            y.append([0,1,0,0,0])
+        elif category == 'entertainment':
+            y.append([0,0,1,0,0])
+        elif category == 'tech':
+            y.append([0,0,0,1,0])
+        else:
+            y.append([0,0,0,0,1])
+
+    return [x_test,np.array(y)]
 
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
